@@ -1,6 +1,6 @@
 services:
   asterisk:
-    image: andrius/asterisk:latest
+    image: andrius/asterisk:20-alpine
     container_name: asterisk
     ports:
       - "8088:8088/tcp"                 # HTTP (ARI & REST)
