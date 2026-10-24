@@ -2,6 +2,12 @@ services:
   asterisk:
     image: andrius/asterisk:20-alpine
     container_name: asterisk
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        ln -sf /usr/share/asterisk/rest-api /var/lib/asterisk/rest-api
+        exec /usr/local/bin/entrypoint.sh /usr/sbin/asterisk -vvvdddf -T -W -U asterisk -p
     ports:
       - "8088:8088/tcp"                 # HTTP (ARI & REST)
       - "8089:8089/tcp"                 # WSS (WebRTC WebSocket for Browser)
