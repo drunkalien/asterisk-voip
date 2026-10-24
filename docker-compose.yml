@@ -1,0 +1,13 @@
+services:
+  asterisk:
+    image: andrius/asterisk:latest
+    container_name: asterisk
+    ports:
+      - "8088:8088/tcp"                 # HTTP (ARI & REST)
+      - "8089:8089/tcp"                 # WSS (WebRTC WebSocket for Browser)
+      - "10000-10050:10000-10050/udp"   # RTP (Audio packets)
+    volumes:
+      - ./config:/etc/asterisk
+      - ./sounds:/var/lib/asterisk/sounds/en
+      - ./moh:/var/lib/asterisk/moh
+    restart: unless-stopped
