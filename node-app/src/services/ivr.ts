@@ -32,24 +32,32 @@ export async function handleIvrMenu(
     console.warn("[IVR] Playback dispatch error:", err.message);
   }
 
+  let routed = false;
+
   // Listen for DTMF keypad presses
   callerChannel.on("ChannelDtmfReceived", async (event: any) => {
+    if (routed) return;
+
     const digit = event.digit;
     console.log(`[IVR] Caller ${callerNumber} pressed key: ${digit}`);
 
-    // Stop greeting audio immediately
-    try {
-      await playback.stop();
-    } catch (e) {}
+    if (digit === "1" || digit === "2") {
+      routed = true;
 
-    if (digit === "1") {
-      // Option 1 -> Sales Queue (Agent 1001)
-      console.log("[IVR] Option 1 -> Routing to Sales Queue");
-      await queueManager.enqueue(client, "sales", callerChannel);
-    } else if (digit === "2") {
-      // Option 2 -> Support Queue (Agent 1002)
-      console.log("[IVR] Option 2 -> Routing to Support Queue");
-      await queueManager.enqueue(client, "support", callerChannel);
+      // Stop greeting audio immediately
+      try {
+        await playback.stop();
+      } catch (e) {}
+
+      if (digit === "1") {
+        // Option 1 -> Sales Queue (Agent 1001)
+        console.log("[IVR] Option 1 -> Routing to Sales Queue");
+        await queueManager.enqueue(client, "sales", callerChannel);
+      } else if (digit === "2") {
+        // Option 2 -> Support Queue (Agent 1002)
+        console.log("[IVR] Option 2 -> Routing to Support Queue");
+        await queueManager.enqueue(client, "support", callerChannel);
+      }
     } else {
       console.log(`[IVR] Invalid key "${digit}". Playing invalid sound.`);
       const errPlayback = client.Playback();

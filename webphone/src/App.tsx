@@ -321,15 +321,21 @@ export default function App() {
 
         {/* 3. EMPLOYEE LOGIN SCREEN */}
         {role === "employee" && !loggedIn && (
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            <p style={{ textAlign: "center", color: "#94a3b8", fontSize: 13, margin: "0 0 6px" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <p style={{ textAlign: "center", color: "#94a3b8", fontSize: 13, margin: "0 0 4px" }}>
               Select your employee extension:
             </p>
             <button style={styles.btnBlue} onClick={() => loginAs("1001")}>
-              🧑‍💼 Agent 1001 (Sales Team)
+              🧑‍💼 Agent 1001 (Sales 1)
             </button>
-            <button style={styles.btnBlue} onClick={() => loginAs("1002")}>
-              👨‍💻 Agent 1002 (Support Team)
+            <button style={{ ...styles.btnBlue, background: "#1d4ed8" }} onClick={() => loginAs("1003")}>
+              🧑‍💼 Agent 1003 (Sales 2)
+            </button>
+            <button style={{ ...styles.btnBlue, background: "#0284c7" }} onClick={() => loginAs("1002")}>
+              👨‍💻 Agent 1002 (Support 1)
+            </button>
+            <button style={{ ...styles.btnBlue, background: "#0369a1" }} onClick={() => loginAs("1004")}>
+              👨‍💻 Agent 1004 (Support 2)
             </button>
             <button style={styles.btnBack} onClick={() => setRole("none")}>
               ← Back to role selection
