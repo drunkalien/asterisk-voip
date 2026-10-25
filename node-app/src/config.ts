@@ -13,10 +13,10 @@ export interface DepartmentConfig {
 export const DEPARTMENTS: Record<DepartmentKey, DepartmentConfig> = {
   sales: {
     name: "Sales",
-    agents: ["1001"],
+    agents: ["1001", "1003"],
   },
   support: {
     name: "Support",
-    agents: ["1002"],
+    agents: ["1002", "1004"],
   },
 };

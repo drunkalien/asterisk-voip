@@ -1,5 +1,18 @@
 import type { Client, Channel, Bridge } from "ari-client";
 import { APP_NAME } from "../config.js";
+import { queueManager } from "./queue.js";
+
+function playAudio(
+  client: Client,
+  channel: Channel,
+  media: string,
+): Promise<void> {
+  return new Promise((resolve) => {
+    const playback = client.Playback();
+    playback.on("PlaybackFinished", () => resolve());
+    channel.play({ media }, playback).catch(() => resolve());
+  });
+}
 
 /**
  * Bridges an incoming caller with a target agent extension.
@@ -75,6 +88,12 @@ export async function connectCallerWithAgent(
     }
   });
 
+  // When either party hangs up or leaves the bridge
+  bridge.on("ChannelLeftBridge", async (event: any) => {
+    console.log(`[BRIDGE] Channel ${event.channel?.id} left bridge`);
+    await cleanup("Channel left bridge");
+  });
+
   // Agent rejects before answering
   dialedChannel.on("ChannelDestroyed", async () => {
     await cleanup(`Agent ${agentExt} rejected or unavailable`);
@@ -104,5 +123,43 @@ export async function routeDirect(
   destination: string,
 ) {
   console.log(`[ROUTER] Direct call from ${callerChannel.id} to PJSIP/${destination}`);
-  await connectCallerWithAgent(client, callerChannel, destination);
+
+  // 1. Check if destination extension is online
+  let isOnline = false;
+  try {
+    const endpoint = await client.endpoints.get({
+      tech: "PJSIP",
+      resource: destination,
+    });
+    isOnline = endpoint && endpoint.state === "online";
+  } catch (err) {
+    isOnline = false;
+  }
+
+  // 2. Check if destination extension is currently busy
+  const isBusy = queueManager.isAgentBusy(destination);
+
+  if (!isOnline || isBusy) {
+    console.log(
+      `[ROUTER] Extension PJSIP/${destination} is unavailable (online: ${isOnline}, busy: ${isBusy}). Playing announcement and hanging up.`,
+    );
+    try {
+      await playAudio(client, callerChannel, "sound:extension-unavailable");
+      await callerChannel.hangup();
+    } catch (e) {}
+    return;
+  }
+
+  // 3. Mark agent as busy during the direct call
+  queueManager.markBusy(destination);
+
+  await connectCallerWithAgent(
+    client,
+    callerChannel,
+    destination,
+    () => {
+      queueManager.markFree(destination);
+    },
+    false,
+  );
 }

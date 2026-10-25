@@ -14,6 +14,11 @@ async function start() {
     // Initialize department holding bridges with Music on Hold
     await queueManager.initBridges(client);
 
+    // Register event listeners
+    client.on("EndpointStateChange", (event: any, endpoint: any) => {
+      queueManager.handleAgentOnline(client, endpoint);
+    });
+
     client.on("StasisStart", async (event: any, channel: Channel) => {
       // Ignore outbound legs originated by our script
       if (event.args && event.args[0] === "dialed") {
@@ -64,8 +69,20 @@ async function start() {
       console.log(`[CALL] Channel ${channel.id} exited Stasis`);
     });
 
-    client.start(APP_NAME);
+    // Start WebSocket connection to register application with Asterisk
+    await client.start(APP_NAME);
     console.log(`[ARI] Listening for application: ${APP_NAME}`);
+
+    // Now that the application is registered in Asterisk, subscribe to PJSIP endpoint events
+    try {
+      await client.applications.subscribe({
+        applicationName: APP_NAME,
+        eventSource: "endpoint:PJSIP",
+      });
+      console.log("[ARI] Subscribed to endpoint:PJSIP events successfully");
+    } catch (err: any) {
+      console.warn(`[WARN] Failed to subscribe to endpoint events: ${err.message}`);
+    }
   } catch (error) {
     console.error("[ERROR] Failed to initialize ARI client:", error);
   }
